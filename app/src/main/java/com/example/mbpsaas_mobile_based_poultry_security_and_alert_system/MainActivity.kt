@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -19,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.ForgotPasswordScreen
@@ -82,6 +85,13 @@ fun HomeScreen(user: User?, onLogout: () -> Unit, modifier: Modifier = Modifier)
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        Image(
+            painter = painterResource(R.drawable.mbpsaas_logo),
+            contentDescription = "MBPSAAS logo",
+            modifier = Modifier
+                .size(160.dp)
+                .padding(bottom = 16.dp),
+        )
         Text("Welcome, ${user?.username ?: "user"}!", style = MaterialTheme.typography.headlineMedium)
         Text("You are logged in.", style = MaterialTheme.typography.bodyMedium)
         Button(onClick = onLogout, modifier = Modifier.padding(top = 24.dp)) {
