@@ -3,10 +3,14 @@
 Mobile-Based Poultry Security and Alert System.
 Android app (Kotlin + Jetpack Compose) + PHP API (XAMPP) + Arduino (later).
 
+> Setting up on a new laptop? Follow `docs/SETUP.md` step by step.
+
 ## How to run everything
 
 1. Open **XAMPP Control Panel** → start **Apache** and **MySQL**.
-2. PHP API lives in `C:\xampp\htdocs\mbpsaas_api\` (NOT inside this project folder).
+2. PHP API source is the repo's `api/` folder. XAMPP serves it through a
+   junction at `C:\xampp\htdocs\mbpsaas_api` (see SETUP.md step 3) — edit the
+   files in `api/`, they're live immediately and tracked by git.
 3. First time only: open `http://localhost/mbpsaas_api/setup.php` in a browser
    — creates database `mbpsaas_db`, the `users` table, and the test account.
 4. Phone and PC must be on the **same Wi-Fi**.
@@ -26,7 +30,7 @@ The account is created by `setup.php`; to change its details later use the app
 - [x] Project setup (Compose, Material 3, Retrofit + Gson)
 - [x] MySQL database `mbpsaas_db` with `users` table
       (passwords and security answers stored hashed with bcrypt)
-- [x] PHP API in `C:\xampp\htdocs\mbpsaas_api\`:
+- [x] PHP API in the repo's `api/` folder (served by XAMPP via junction):
   - `config.php` — DB connection + JSON helpers
   - `setup.php` — one-time DB/table/test-user creation
   - `login.php` — username (or email) + password
