@@ -30,3 +30,16 @@ data class BasicResponse(
     val success: Boolean,
     val message: String,
 )
+
+data class MotionEvent(
+    val id: Int,
+    @SerializedName("detected_at") val detectedAt: String,
+    @SerializedName("buzzer_triggered") val buzzerTriggered: Boolean,
+    val note: String?,
+)
+
+data class MotionEventsResponse(
+    val success: Boolean,
+    val message: String,
+    val events: List<MotionEvent>? = null,
+)

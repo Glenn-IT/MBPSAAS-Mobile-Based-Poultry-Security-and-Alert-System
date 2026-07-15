@@ -38,4 +38,7 @@ interface ApiService {
         @Field("reset_token") resetToken: String,
         @Field("new_password") newPassword: String,
     ): BasicResponse
+
+    @GET("get_motion_events.php")
+    suspend fun getMotionEvents(): MotionEventsResponse
 }

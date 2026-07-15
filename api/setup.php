@@ -29,6 +29,16 @@ $conn->query("
     ) ENGINE=InnoDB
 ");
 
+$conn->query("
+    CREATE TABLE IF NOT EXISTS motion_events (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        detected_at DATETIME NOT NULL,
+        buzzer_triggered TINYINT(1) NOT NULL DEFAULT 1,
+        note VARCHAR(255) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB
+");
+
 // Seed a test account: username "admin", password "admin123",
 // security answer "chicken" (answers are stored lowercase + hashed).
 $check = $conn->query("SELECT id FROM users WHERE username = 'admin'");
@@ -51,7 +61,7 @@ if ($check && $check->num_rows === 0) {
 
 echo json_encode([
     'success' => true,
-    'message' => 'Database and users table ready.',
+    'message' => 'Database, users table, and motion_events table ready.',
     'test_user_created' => $seeded,
     'test_credentials' => [
         'username' => 'admin',

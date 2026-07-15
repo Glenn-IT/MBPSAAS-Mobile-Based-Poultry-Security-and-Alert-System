@@ -39,10 +39,16 @@ The account is created by `setup.php`; to change its details later use the app
   - `verify_security_answer.php` — step 2: user must pick the CORRECT question
     from a dropdown AND give the correct answer → returns 15-minute reset token
   - `reset_password.php` — step 3: new password with token
+  - `log_motion_event.php` — Arduino/ESP calls this when the motion sensor
+    fires and the buzzer sounds; inserts a row into `motion_events`
+  - `get_motion_events.php` — app calls this to fetch the alert log (last 50,
+    newest first)
+- [x] `motion_events` table (detected_at, buzzer_triggered, note)
 - [x] Login screen (with show/hide password)
 - [x] Forgot Password screen — 3 steps:
       username → pick question + answer → new password (with show/hide)
-- [x] Placeholder Home screen with logout
+- [x] Home dashboard — motion/buzzer status card + alert log, reading real
+      data from `get_motion_events.php` (empty until Arduino sends events)
 - [x] Password-reset success dialog
 - [x] Tested end-to-end on a real phone over Wi-Fi
 - [x] Decision: single admin account only — NO register screen
@@ -52,15 +58,13 @@ The account is created by `setup.php`; to change its details later use the app
 
 - [ ] **Stay logged in** — save the user with DataStore/SharedPreferences so the
       app doesn't ask for login every launch
-- [ ] **Home dashboard** — real UI replacing the placeholder
-- [ ] **Arduino integration** — the poultry security part:
-  - [ ] Decide how Arduino talks to the system (Arduino → PHP API endpoint,
-        e.g. `sensor_data.php` that inserts readings into MySQL)
-  - [ ] Table(s) for sensor readings / events
-  - [ ] App screen showing live sensor status
-- [ ] **Alerts** — notify the phone when Arduino detects something
-      (simplest: app polls an `alerts` table; better: Firebase Cloud Messaging)
-- [ ] Alert history screen
+- [ ] **Arduino integration** — wire up the physical motion sensor + buzzer:
+  - [ ] Arduino/ESP sketch: on motion, sound the buzzer and POST to
+        `log_motion_event.php` (`buzzer_triggered`, optional `note`)
+  - [ ] Test the endpoint with curl/Postman before the hardware is ready:
+        `curl -X POST http://localhost/mbpsaas_api/log_motion_event.php -d buzzer_triggered=1`
+  - [ ] Push notification instead of manual refresh (simplest: poll on an
+        interval; better: Firebase Cloud Messaging)
 - [ ] Settings screen (change password, change security question)
 - [ ] Later/nice-to-have: input rate-limiting on login, HTTPS, hosting the API
       somewhere permanent instead of the laptop
