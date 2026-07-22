@@ -1,5 +1,6 @@
 package com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +23,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.R
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.ApiClient
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
 import kotlinx.coroutines.launch
@@ -69,6 +72,12 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.mbpsaas_logo),
+            contentDescription = "Poultry Security System logo",
+            modifier = Modifier.size(120.dp),
+        )
+        Spacer(Modifier.height(16.dp))
         Text("MBPSAAS", style = MaterialTheme.typography.headlineLarge)
         Text(
             "Poultry Security & Alert System",

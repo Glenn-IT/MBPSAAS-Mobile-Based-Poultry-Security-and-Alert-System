@@ -41,4 +41,14 @@ interface ApiService {
 
     @GET("get_motion_events.php")
     suspend fun getMotionEvents(): MotionEventsResponse
+
+    @FormUrlEncoded
+    @POST("update_profile.php")
+    suspend fun updateProfile(
+        @Field("user_id") userId: Int,
+        @Field("current_password") currentPassword: String,
+        @Field("new_username") newUsername: String,
+        @Field("new_email") newEmail: String,
+        @Field("new_password") newPassword: String,
+    ): UpdateProfileResponse
 }

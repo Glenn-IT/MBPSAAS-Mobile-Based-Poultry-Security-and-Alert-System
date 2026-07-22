@@ -14,8 +14,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
-import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.DashboardScreen
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.ForgotPasswordScreen
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.HomeScreen
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.LoginScreen
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui.theme.MBPSAASMobileBasedPoultrySecurityandAlertSystemTheme
 
@@ -55,12 +55,13 @@ fun AppNavigation(modifier: Modifier = Modifier) {
             modifier = modifier,
         )
 
-        Screen.Home -> DashboardScreen(
+        Screen.Home -> HomeScreen(
             user = loggedInUser,
             onLogout = {
                 loggedInUser = null
                 screen = Screen.Login
             },
+            onProfileUpdated = { updatedUser -> loggedInUser = updatedUser },
             modifier = modifier,
         )
     }

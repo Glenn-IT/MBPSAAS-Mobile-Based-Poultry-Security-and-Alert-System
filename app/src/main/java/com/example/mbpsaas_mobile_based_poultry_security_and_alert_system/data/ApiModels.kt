@@ -43,3 +43,9 @@ data class MotionEventsResponse(
     val message: String,
     val events: List<MotionEvent>? = null,
 )
+
+data class UpdateProfileResponse(
+    val success: Boolean,
+    val message: String,
+    val user: User? = null,
+)
