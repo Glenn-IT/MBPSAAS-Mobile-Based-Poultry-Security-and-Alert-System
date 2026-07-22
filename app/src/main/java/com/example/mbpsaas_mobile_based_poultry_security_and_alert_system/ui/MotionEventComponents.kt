@@ -56,7 +56,7 @@ internal fun MotionStatusCard(latestEvent: MotionEvent?) {
             }
             Column(modifier = Modifier.padding(start = 16.dp)) {
                 Text(
-                    if (triggered) "Motion detected — buzzer triggered" else "No motion — coop is secure",
+                    if (triggered) "Intruder alert — buzzer sounded" else "No motion — coop is secure",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
@@ -86,7 +86,7 @@ internal fun MotionEventRow(event: MotionEvent) {
             )
             Column(modifier = Modifier.padding(start = 12.dp)) {
                 Text(
-                    if (event.buzzerTriggered) "Motion detected — buzzer sounded" else "Motion detected",
+                    if (event.buzzerTriggered) "Intruder alert — buzzer sounded" else "Intruder alert",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
