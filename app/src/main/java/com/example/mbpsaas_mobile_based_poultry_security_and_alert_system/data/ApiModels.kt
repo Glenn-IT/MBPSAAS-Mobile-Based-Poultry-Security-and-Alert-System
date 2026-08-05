@@ -31,8 +31,22 @@ data class BasicResponse(
     val message: String,
 )
 
+data class SensorZone(
+    val id: Int,
+    @SerializedName("sensor_code") val sensorCode: String,
+    val name: String,
+    @SerializedName("is_enabled") val isEnabled: Boolean,
+)
+
+data class SensorsResponse(
+    val success: Boolean,
+    val message: String,
+    val sensors: List<SensorZone>? = null,
+)
+
 data class MotionEvent(
     val id: Int,
+    val zone: String? = null,
     @SerializedName("detected_at") val detectedAt: String,
     @SerializedName("buzzer_triggered") val buzzerTriggered: Boolean,
     val note: String?,

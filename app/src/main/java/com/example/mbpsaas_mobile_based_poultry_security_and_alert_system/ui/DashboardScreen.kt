@@ -15,11 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.MotionEvent
 
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.SensorZone
+
 @Composable
 fun DashboardScreen(
     events: List<MotionEvent>,
+    sensors: List<SensorZone>,
     isLoading: Boolean,
     errorMessage: String?,
+    onToggleSensor: (String, Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val latestEvent = events.firstOrNull()
@@ -32,6 +36,11 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         MotionStatusCard(latestEvent)
+
+        SensorControlCard(
+            sensors = sensors,
+            onToggleSensor = onToggleSensor,
+        )
 
         Text(
             "Recent activity",

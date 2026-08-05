@@ -20,6 +20,13 @@ const SECURITY_QUESTIONS = [
     'What is your favorite food?',
 ];
 
+const SENSOR_ZONES = [
+    'COOP1' => 'Coop 1 - PIR Sensor',
+    'COOP2' => 'Coop 2 - PIR Sensor',
+    'PERIMETER' => 'Perimeter - PIR Sensor',
+];
+
+
 function db_connect(): mysqli
 {
     mysqli_report(MYSQLI_REPORT_OFF);

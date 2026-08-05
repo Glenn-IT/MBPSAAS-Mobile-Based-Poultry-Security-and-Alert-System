@@ -129,10 +129,10 @@ Return the richer ABMDMS-style payload so the app can show live per-zone status,
 Adapt `motion_sensor.ino`:
 
 - Same multi-zone PIR loop (independent per-zone state, warm-up countdown, `STOP_CONFIRM_MS` debounce, per-zone `<ZONE>_MOTION_DETECTED/STOPPED` tokens).
-- Rename `ZONE_NAME[]` to `{ "COOP1", "COOP2", "PERIMETER", "GATE" }` on pins 2–5.
-- Add a **buzzer** on a digital pin (e.g. pin 8): sound while any zone is active (replaces ABMDMS's LED-only indicator). Keep the onboard LED too.
-- Baud 9600 to match the bridge.
-- New wiring doc `arduino/POULTRY_WIRING.md` (based on ABMDMS's `PIR_MULTI_ZONE_WIRING.md`) covering the PIRs + buzzer.
+- Use 3 PIR sensor zones: `{ "COOP1", "COOP2", "PERIMETER" }` on pins D2, D3, D4.
+- Add a **buzzer** on digital pin D8: sound while any active zone detects motion.
+- Baud 9600 to match the serial bridge.
+- Full schematic and pin connections: see [`docs/WIRING_DIAGRAM.md`](WIRING_DIAGRAM.md).
 
 ## 9. Serial bridge — new `serial/serial_reader.php`
 

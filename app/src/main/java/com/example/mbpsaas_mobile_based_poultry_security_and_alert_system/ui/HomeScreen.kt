@@ -32,6 +32,10 @@ import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.M
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
 import androidx.compose.runtime.LaunchedEffect
 
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.SensorZone
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+
 private enum class HomeTab(val label: String) {
     Dashboard("Dashboard"),
     ActivityLog("Activity Log"),
@@ -48,25 +52,61 @@ fun HomeScreen(
 ) {
     var currentTab by remember { mutableStateOf(HomeTab.Dashboard) }
     var events by remember { mutableStateOf<List<MotionEvent>>(emptyList()) }
+    var sensors by remember { mutableStateOf<List<SensorZone>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var refreshKey by remember { mutableStateOf(0) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(refreshKey) {
         isLoading = true
         errorMessage = null
         try {
-            val response = ApiClient.service.getMotionEvents()
-            if (response.success) {
-                events = response.events ?: emptyList()
+            val eventsResponse = ApiClient.service.getMotionEvents()
+            if (eventsResponse.success) {
+                events = eventsResponse.events ?: emptyList()
             } else {
-                errorMessage = response.message
+                errorMessage = eventsResponse.message
+            }
+
+            val sensorsResponse = ApiClient.service.getSensors()
+            if (sensorsResponse.success) {
+                sensors = sensorsResponse.sensors ?: emptyList()
             }
         } catch (e: Exception) {
             errorMessage = "Cannot reach server: ${e.message}"
         } finally {
             isLoading = false
+        }
+    }
+
+    val onToggleSensor: (String, Boolean) -> Unit = { sensorCode, newEnabledState ->
+        // Optimistic UI update
+        sensors = sensors.map {
+            if (it.sensorCode == sensorCode) it.copy(isEnabled = newEnabledState) else it
+        }
+        coroutineScope.launch {
+            try {
+                val res = ApiClient.service.toggleSensor(sensorCode, if (newEnabledState) 1 else 0)
+                if (res.success) {
+                    // Refresh motion events so the new enable/disable log entry appears immediately
+                    val eventsResponse = ApiClient.service.getMotionEvents()
+                    if (eventsResponse.success) {
+                        events = eventsResponse.events ?: emptyList()
+                    }
+                } else {
+                    // Revert if request failed
+                    sensors = sensors.map {
+                        if (it.sensorCode == sensorCode) it.copy(isEnabled = !newEnabledState) else it
+                    }
+                }
+            } catch (e: Exception) {
+                // Revert on network failure
+                sensors = sensors.map {
+                    if (it.sensorCode == sensorCode) it.copy(isEnabled = !newEnabledState) else it
+                }
+            }
         }
     }
 
@@ -126,8 +166,10 @@ fun HomeScreen(
         when (currentTab) {
             HomeTab.Dashboard -> DashboardScreen(
                 events = events,
+                sensors = sensors,
                 isLoading = isLoading,
                 errorMessage = errorMessage,
+                onToggleSensor = onToggleSensor,
                 modifier = contentModifier,
             )
 

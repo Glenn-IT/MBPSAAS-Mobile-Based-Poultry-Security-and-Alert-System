@@ -42,6 +42,16 @@ interface ApiService {
     @GET("get_motion_events.php")
     suspend fun getMotionEvents(): MotionEventsResponse
 
+    @GET("get_sensors.php")
+    suspend fun getSensors(): SensorsResponse
+
+    @FormUrlEncoded
+    @POST("toggle_sensor.php")
+    suspend fun toggleSensor(
+        @Field("sensor_code") sensorCode: String,
+        @Field("is_enabled") isEnabled: Int,
+    ): BasicResponse
+
     @FormUrlEncoded
     @POST("update_profile.php")
     suspend fun updateProfile(
