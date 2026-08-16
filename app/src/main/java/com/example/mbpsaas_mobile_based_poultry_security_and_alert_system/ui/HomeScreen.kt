@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,6 +41,7 @@ import kotlinx.coroutines.launch
 
 private enum class HomeTab(val label: String) {
     Dashboard("Dashboard"),
+    TriggeredAlerts("Alerts"),
     ActivityLog("Activity Log"),
     Profile("Profile"),
 }
@@ -162,6 +164,12 @@ fun HomeScreen(
                     label = { Text(HomeTab.Dashboard.label) },
                 )
                 NavigationBarItem(
+                    selected = currentTab == HomeTab.TriggeredAlerts,
+                    onClick = { currentTab = HomeTab.TriggeredAlerts },
+                    icon = { Icon(Icons.Filled.Warning, contentDescription = null) },
+                    label = { Text(HomeTab.TriggeredAlerts.label) },
+                )
+                NavigationBarItem(
                     selected = currentTab == HomeTab.ActivityLog,
                     onClick = { currentTab = HomeTab.ActivityLog },
                     icon = { Icon(Icons.AutoMirrored.Filled.ListAlt, contentDescription = null) },
@@ -189,6 +197,13 @@ fun HomeScreen(
                 isLoading = isLoading,
                 errorMessage = errorMessage,
                 onToggleSensor = onToggleSensor,
+                modifier = contentModifier,
+            )
+
+            HomeTab.TriggeredAlerts -> TriggeredAlertsScreen(
+                events = events,
+                isLoading = isLoading,
+                errorMessage = errorMessage,
                 modifier = contentModifier,
             )
 
