@@ -1,8 +1,10 @@
 package com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +12,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,43 +32,88 @@ fun DashboardScreen(
     modifier: Modifier = Modifier,
 ) {
     val latestEvent = events.firstOrNull()
-    val recentEvents = events.take(5)
+    val recentEvents = events.take(10)
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        MotionStatusCard(
-            overallStatus = overallStatus,
-            latestEvent = latestEvent,
-        )
+        // 1. Overall Security Status Banner
+        item {
+            MotionStatusCard(
+                overallStatus = overallStatus,
+                latestEvent = latestEvent,
+            )
+        }
 
-        ZoneStatusGrid(
-            zones = zones,
-        )
+        // 2. Poultry Farm Zone Cards
+        item {
+            ZoneStatusGrid(
+                zones = zones,
+            )
+        }
 
-        SensorControlCard(
-            sensors = sensors,
-            onToggleSensor = onToggleSensor,
-        )
+        // 3. Sensor Toggle Controls
+        item {
+            SensorControlCard(
+                sensors = sensors,
+                onToggleSensor = onToggleSensor,
+            )
+        }
 
-        Text(
-            "Recent Intrusion Activity",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
+        // 4. Section Title: Recent Intrusion Activity
+        item {
+            Text(
+                text = "Recent Intrusion Activity",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
 
+        // 5. Recent Activity List Items or Empty/Loading state
         when {
-            isLoading && events.isEmpty() -> CircularProgressIndicator(modifier = Modifier.padding(top = 24.dp))
-            errorMessage != null && events.isEmpty() -> Text(errorMessage, color = MaterialTheme.colorScheme.error)
-            recentEvents.isEmpty() -> Text("No motion events logged yet. Farm is secure.")
-            else -> LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                items(recentEvents) { event -> MotionEventRow(event) }
+            isLoading && events.isEmpty() -> {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+
+            errorMessage != null && events.isEmpty() -> {
+                item {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(8.dp),
+                    )
+                }
+            }
+
+            recentEvents.isEmpty() -> {
+                item {
+                    Text(
+                        text = "No motion events logged yet. Farm is secure.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
+                }
+            }
+
+            else -> {
+                items(recentEvents) { event ->
+                    MotionEventRow(event)
+                }
             }
         }
     }
