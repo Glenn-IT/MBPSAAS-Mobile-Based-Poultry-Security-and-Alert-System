@@ -44,17 +44,31 @@ data class SensorsResponse(
     val sensors: List<SensorZone>? = null,
 )
 
+data class ZoneStatus(
+    val label: String,
+    val status: String,
+    @SerializedName("last_motion") val lastMotion: String? = null,
+)
+
 data class MotionEvent(
     val id: Int,
+    @SerializedName("event_type") val eventType: String? = null,
     val zone: String? = null,
+    @SerializedName("zone_label") val zoneLabel: String? = null,
+    val source: String? = null,
     @SerializedName("detected_at") val detectedAt: String,
-    @SerializedName("buzzer_triggered") val buzzerTriggered: Boolean,
-    val note: String?,
+    @SerializedName("buzzer_triggered") val buzzerTriggered: Boolean = true,
+    val note: String? = null,
 )
 
 data class MotionEventsResponse(
     val success: Boolean,
     val message: String,
+    val status: String? = null,
+    @SerializedName("total_events") val totalEvents: Int = 0,
+    @SerializedName("today_events") val todayEvents: Int = 0,
+    @SerializedName("last_motion") val lastMotion: String? = null,
+    val zones: Map<String, ZoneStatus>? = null,
     val events: List<MotionEvent>? = null,
 )
 

@@ -5,11 +5,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 
-    // USB mode: phone plugged into the XAMPP PC, after running
-    //   adb reverse tcp:8080 tcp:80
-    // "localhost" then tunnels through the cable to the PC. Works on any PC, no Wi-Fi needed.
-    // For Wi-Fi instead, use the PC's LAN IP, e.g. "http://192.168.254.104/mbpsaas_api/".
-    // For the Android EMULATOR use "http://10.0.2.2/mbpsaas_api/".
+    // =====================================================================================
+    // BASE_URL: USB Cable Tunneling via `adb reverse tcp:8080 tcp:80`
+    // =====================================================================================
     private const val BASE_URL = "http://localhost:8080/mbpsaas_api/"
 
     val service: ApiService by lazy {

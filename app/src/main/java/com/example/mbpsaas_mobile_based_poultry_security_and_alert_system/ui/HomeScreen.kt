@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
@@ -22,18 +22,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.ApiClient
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.MotionEvent
-import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
-import androidx.compose.runtime.LaunchedEffect
-
 import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.SensorZone
-import androidx.compose.runtime.rememberCoroutineScope
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.User
+import com.example.mbpsaas_mobile_based_poultry_security_and_alert_system.data.ZoneStatus
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private enum class HomeTab(val label: String) {
@@ -53,31 +55,47 @@ fun HomeScreen(
     var currentTab by remember { mutableStateOf(HomeTab.Dashboard) }
     var events by remember { mutableStateOf<List<MotionEvent>>(emptyList()) }
     var sensors by remember { mutableStateOf<List<SensorZone>>(emptyList()) }
+    var overallStatus by remember { mutableStateOf<String?>(null) }
+    var zones by remember { mutableStateOf<Map<String, ZoneStatus>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var refreshKey by remember { mutableStateOf(0) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // 3-second live polling loop for real-time poultry security updates
     LaunchedEffect(refreshKey) {
-        isLoading = true
-        errorMessage = null
-        try {
-            val eventsResponse = ApiClient.service.getMotionEvents()
-            if (eventsResponse.success) {
-                events = eventsResponse.events ?: emptyList()
-            } else {
-                errorMessage = eventsResponse.message
+        var isFirstRun = true
+        while (isActive) {
+            if (isFirstRun) {
+                isLoading = true
             }
+            errorMessage = null
+            try {
+                val eventsResponse = ApiClient.service.getMotionEvents()
+                if (eventsResponse.success) {
+                    events = eventsResponse.events ?: emptyList()
+                    overallStatus = eventsResponse.status
+                    zones = eventsResponse.zones
+                } else {
+                    errorMessage = eventsResponse.message
+                }
 
-            val sensorsResponse = ApiClient.service.getSensors()
-            if (sensorsResponse.success) {
-                sensors = sensorsResponse.sensors ?: emptyList()
+                val sensorsResponse = ApiClient.service.getSensors()
+                if (sensorsResponse.success) {
+                    sensors = sensorsResponse.sensors ?: emptyList()
+                }
+            } catch (e: Exception) {
+                if (isFirstRun) {
+                    errorMessage = "Cannot reach server: ${e.message}"
+                }
+            } finally {
+                if (isFirstRun) {
+                    isLoading = false
+                    isFirstRun = false
+                }
             }
-        } catch (e: Exception) {
-            errorMessage = "Cannot reach server: ${e.message}"
-        } finally {
-            isLoading = false
+            delay(3000L) // Poll every 3 seconds
         }
     }
 
@@ -90,19 +108,18 @@ fun HomeScreen(
             try {
                 val res = ApiClient.service.toggleSensor(sensorCode, if (newEnabledState) 1 else 0)
                 if (res.success) {
-                    // Refresh motion events so the new enable/disable log entry appears immediately
                     val eventsResponse = ApiClient.service.getMotionEvents()
                     if (eventsResponse.success) {
                         events = eventsResponse.events ?: emptyList()
+                        overallStatus = eventsResponse.status
+                        zones = eventsResponse.zones
                     }
                 } else {
-                    // Revert if request failed
                     sensors = sensors.map {
                         if (it.sensorCode == sensorCode) it.copy(isEnabled = !newEnabledState) else it
                     }
                 }
             } catch (e: Exception) {
-                // Revert on network failure
                 sensors = sensors.map {
                     if (it.sensorCode == sensorCode) it.copy(isEnabled = !newEnabledState) else it
                 }
@@ -165,6 +182,8 @@ fun HomeScreen(
 
         when (currentTab) {
             HomeTab.Dashboard -> DashboardScreen(
+                overallStatus = overallStatus,
+                zones = zones,
                 events = events,
                 sensors = sensors,
                 isLoading = isLoading,

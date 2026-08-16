@@ -1,80 +1,49 @@
 # MBPSAAS — Project Checklist
 
 Mobile-Based Poultry Security and Alert System.
-Android app (Kotlin + Jetpack Compose) + PHP API (XAMPP) + Arduino (later).
+Android app (Kotlin + Jetpack Compose) + PHP API (XAMPP) + Arduino (COM5).
 
-> Setting up on a new laptop? Follow `docs/SETUP.md` step by step.
+> Complete System Documentation: [`docs/COMPLETE_INTEGRATION_SUMMARY.md`](docs/COMPLETE_INTEGRATION_SUMMARY.md)  
+> Integration Plan & Roadmap: [`docs/ARDUINO_INTEGRATION_PLAN.md`](docs/ARDUINO_INTEGRATION_PLAN.md)  
+> Step-by-Step Checklist: [`docs/ARDUINO_INTEGRATION_CHECKLIST.md`](docs/ARDUINO_INTEGRATION_CHECKLIST.md)
+
+---
 
 ## How to run everything
 
 1. Open **XAMPP Control Panel** → start **Apache** and **MySQL**.
-2. PHP API source is the repo's `api/` folder. XAMPP serves it through a
-   junction at `C:\xampp\htdocs\mbpsaas_api` (see SETUP.md step 3) — edit the
-   files in `api/`, they're live immediately and tracked by git.
-3. First time only: open `http://localhost/mbpsaas_api/setup.php` in a browser
-   — creates database `mbpsaas_db`, the `users` table, and the test account.
-4. Phone and PC must be on the **same Wi-Fi**.
-   The app calls `http://192.168.254.104/mbpsaas_api/` — if the PC's IP changes
-   (check with `ipconfig`), update `BASE_URL` in `app/src/main/java/.../data/ApiClient.kt`.
-   For the Android emulator use `http://10.0.2.2/mbpsaas_api/`.
-5. Press Run ▶ in Android Studio.
+2. Run database setup (if first time): `http://localhost/mbpsaas_api/setup.php`.
+3. Plug in phone via USB cable and run [`tools/adb_reverse.bat`](../tools/adb_reverse.bat) to activate USB port tunneling (`adb reverse tcp:8080 tcp:80`).
+4. Plug in Arduino Uno on **COM5** and launch [`serial/start_reader.bat COM5`](../serial/start_reader.bat). *(Ensure Arduino IDE Serial Monitor is closed)*.
+5. Launch the Android App on your phone and log in with `admin` / `admin123`.
 
-**The one and only account** (this system uses a single admin — no registration):
-username `admin` / password `admin123`
-Security question: "What is your favorite animal?" → answer `chicken` (case-insensitive)
-The account is created by `setup.php`; to change its details later use the app
-(forgot password) or edit the `users` table in phpMyAdmin.
+---
 
-## Done ✅
+## Completed Tasks ✅
 
-- [x] Project setup (Compose, Material 3, Retrofit + Gson)
-- [x] MySQL database `mbpsaas_db` with `users` table
-      (passwords and security answers stored hashed with bcrypt)
-- [x] PHP API in the repo's `api/` folder (served by XAMPP via junction):
-  - `config.php` — DB connection + JSON helpers
-  - `setup.php` — one-time DB/table/test-user creation
-  - `login.php` — username (or email) + password
-  - `get_questions.php` — list of security questions (for dropdown)
-  - `check_user.php` — forgot password step 1 (does the account exist?)
-  - `verify_security_answer.php` — step 2: user must pick the CORRECT question
-    from a dropdown AND give the correct answer → returns 15-minute reset token
-  - `reset_password.php` — step 3: new password with token
-  - `log_motion_event.php` — Arduino/ESP calls this when the motion sensor
-    fires and the buzzer sounds; inserts a row into `motion_events`
-  - `get_motion_events.php` — app calls this to fetch the alert log (last 50,
-    newest first)
-- [x] `motion_events` table (detected_at, buzzer_triggered, note)
-- [x] Login screen (with show/hide password)
-- [x] Forgot Password screen — 3 steps:
-      username → pick question + answer → new password (with show/hide)
-- [x] Home dashboard — motion/buzzer status card + alert log, reading real
-      data from `get_motion_events.php` (empty until Arduino sends events)
-- [x] Password-reset success dialog
-- [x] Tested end-to-end on a real phone over Wi-Fi
-- [x] Decision: single admin account only — NO register screen
-      (admin is seeded by `setup.php`)
-
-## To do 📋
-
-- [ ] **Stay logged in** — save the user with DataStore/SharedPreferences so the
-      app doesn't ask for login every launch
-- [ ] **Arduino integration** — wire up the physical motion sensor + buzzer:
-  - [ ] Arduino/ESP sketch: on motion, sound the buzzer and POST to
-        `log_motion_event.php` (`buzzer_triggered`, optional `note`)
-  - [ ] Test the endpoint with curl/Postman before the hardware is ready:
-        `curl -X POST http://localhost/mbpsaas_api/log_motion_event.php -d buzzer_triggered=1`
-  - [ ] Push notification instead of manual refresh (simplest: poll on an
-        interval; better: Firebase Cloud Messaging)
-- [ ] Settings screen (change password, change security question)
-- [ ] Later/nice-to-have: input rate-limiting on login, HTTPS, hosting the API
-      somewhere permanent instead of the laptop
-
-## Gotchas we already hit
-
-- Build from terminal needs `JAVA_HOME` = `C:\Program Files\Android\Android Studio1\jbr`
-  (Android Studio is installed in the "Android Studio1" folder).
-- compileSdk had to be bumped to 37 (androidx.core 1.19.0 requires it).
-- `android:usesCleartextTraffic="true"` is set in the manifest because XAMPP
-  serves plain HTTP — remove this if the API ever moves to HTTPS.
-- If the phone says "Cannot reach server": check same Wi-Fi, Apache running,
-  and Windows Firewall allowing Apache (port 80).
+- [x] **Project Setup**: Jetpack Compose, Material 3, Retrofit 2 + Gson.
+- [x] **MySQL Database (`motion_monitoring`)**:
+  - `motion_logs` table (`id`, `event_type`, `zone`, `source`, `detected_at`, `created_at`)
+  - `sms_logs` table (`id`, `zone`, `recipient`, `status`, `detail`, `sent_at`, `created_at`)
+  - `users` table (`id`, `username`, `email`, `password_hash`, `security_question`, `security_answer_hash`)
+  - `sensor_zones` table (`id`, `sensor_code`, `name`, `is_enabled`)
+- [x] **PHP REST API (`api/`)**:
+  - `config.php` — Connected to `motion_monitoring` database
+  - `setup.php` — 1-click schema & default admin table creation
+  - `login.php` — Authentication returning clean JSON
+  - `log_motion_event.php` — Accepts serial events and saves to `motion_logs`
+  - `get_motion_events.php` — Serves multi-zone status and history to Android app
+  - `get_sensors.php` / `toggle_sensor.php` — Sensor zone management
+- [x] **Arduino Hardware & Firmware (COM5)**:
+  - Sketch: [`arduino/poultry_sensor/poultry_sensor.ino`](../arduino/poultry_sensor/poultry_sensor.ino)
+  - 3x PIR sensors (Pins 2, 3, 4), local farm alarm buzzer (Pin 8), SIM800L GSM module (Pins 10/11/12).
+- [x] **Serial Reader Bridge**:
+  - Listener: [`serial/serial_reader.ps1`](../serial/serial_reader.ps1) & [`serial/start_reader.bat COM5`](../serial/start_reader.bat) listening on COM5.
+- [x] **Android Application Features**:
+  - `MotionStatusCard`: Visual green/red intrusion status banner.
+  - `ZoneStatusGrid`: Multi-zone status cards (`Coop Zone A`, `Coop Zone B`, `Coop Zone C`, `Perimeter Gate`).
+  - **3-Second Background Polling Loop**: Live automatic updates on motion events.
+- [x] **Troubleshooting & Fixes Completed**:
+  - `Failed to open COM5`: Solved with native PowerShell .NET serial listener.
+  - `JsonReader.setLenient(true)`: Solved by adding missing tables to `motion_monitoring` & returning clean JSON.
+  - `Failed to connect to localhost/127.0.0.1:8080`: Solved with `tools/adb_reverse.bat` automated port forwarding.

@@ -13,6 +13,11 @@ $conn = db_connect();
 $stmt = $conn->prepare(
     "SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?"
 );
+
+if (!$stmt) {
+    respond(false, 'Database table setup error: ' . $conn->error);
+}
+
 $stmt->bind_param('ss', $username, $username);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();

@@ -1,16 +1,14 @@
 <?php
 // MBPSAAS API - Database configuration
-// XAMPP defaults: user "root", empty password
-
+// Using ABMDMS database 'motion_monitoring' directly
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'mbpsaas_db');
+define('DB_NAME', 'motion_monitoring');
 
 header('Content-Type: application/json; charset=utf-8');
 
 // The fixed list of security questions shown in the forgot-password dropdown.
-// The admin's stored question (seeded in setup.php) must exactly match one of these.
 const SECURITY_QUESTIONS = [
     'What is your favorite animal?',
     'What is the name of your first pet?',
@@ -20,19 +18,25 @@ const SECURITY_QUESTIONS = [
     'What is your favorite food?',
 ];
 
-const SENSOR_ZONES = [
-    'COOP1' => 'Coop 1 - PIR Sensor',
-    'COOP2' => 'Coop 2 - PIR Sensor',
-    'PERIMETER' => 'Perimeter - PIR Sensor',
-];
+const ALLOWED_ZONES = ['ROOMA', 'ROOMB', 'ROOMC', 'ROOMD', 'COOP1', 'COOP2', 'COOP3', 'PERIMETER'];
 
+const ZONE_LABELS = [
+    'ROOMA' => 'Coop Zone A',
+    'ROOMB' => 'Coop Zone B',
+    'ROOMC' => 'Coop Zone C',
+    'ROOMD' => 'Perimeter Gate',
+    'COOP1' => 'Coop Zone A',
+    'COOP2' => 'Coop Zone B',
+    'COOP3' => 'Coop Zone C',
+    'PERIMETER' => 'Perimeter Gate',
+];
 
 function db_connect(): mysqli
 {
     mysqli_report(MYSQLI_REPORT_OFF);
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
     if ($conn->connect_error) {
-        respond(false, 'Database connection failed. Did you run setup.php?');
+        respond(false, 'Database connection failed. Is MySQL running in XAMPP?');
     }
     $conn->set_charset('utf8mb4');
     return $conn;

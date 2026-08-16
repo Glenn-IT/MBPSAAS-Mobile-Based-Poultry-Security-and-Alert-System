@@ -1,34 +1,27 @@
-# MBPSAAS — project notes for Claude
+# MBPSAAS — project notes
 
-Mobile-Based Poultry Security and Alert System. Android (Kotlin/Compose) app +
-PHP/MySQL API served by XAMPP as `http://localhost/mbpsaas_api/`. Reference
-project for hardware work is **ABMDMS** (`C:\xampp\htdocs\ABMDMS`).
+Mobile-Based Poultry Security and Alert System. Android (Kotlin/Jetpack Compose) app + PHP/MySQL API served by XAMPP as `http://localhost/mbpsaas_api/`.
 
-## Active plan: Arduino integration (multi-zone)
+## Active plan: Arduino & Android integration (multi-zone)
 
-We are adding the Arduino → serial bridge → PHP → MySQL pipeline, modeled on
-ABMDMS, and upgrading motion tracking to **multiple zones**.
+We are connecting the **Arduino hardware** directly to the **ABMDMS MySQL Database (`motion_monitoring`)** and the **Android Compose app**.
 
-**Full plan:** [`docs/ARDUINO_INTEGRATION_PLAN.md`](docs/ARDUINO_INTEGRATION_PLAN.md) — read this before starting.
+- **Full Plan:** [`docs/ARDUINO_INTEGRATION_PLAN.md`](docs/ARDUINO_INTEGRATION_PLAN.md)
+- **Integration Checklist:** [`docs/ARDUINO_INTEGRATION_CHECKLIST.md`](docs/ARDUINO_INTEGRATION_CHECKLIST.md)
 
-To resume, I can just say: **"let's do the Arduino integration plan"** and Claude
-should follow that doc, building in the order in §13 (DB → API → Android against a
-simulator → hardware last).
-
-### Decisions still open before implementing (see plan §15)
-- Zone list & sensor count — default assumed: 4 zones (Coop 1, Coop 2, Perimeter, Gate).
-- Buzzer type — active vs passive (changes the sketch).
-- Old `motion_events` rows with no zone — default to `COOP1`, or purge on migration?
+### Database Decision:
+- Using the **ABMDMS MySQL Database (`motion_monitoring`)** with `motion_logs` and `sms_logs` tables.
 
 ### Status
-- [x] Plan written (`docs/ARDUINO_INTEGRATION_PLAN.md`)
-- [ ] DB schema (`api/setup.php`)
-- [ ] API (`api/config.php`, `log_motion_event.php`, `get_motion_events.php`)
-- [ ] Android models + UI (zones)
-- [ ] Arduino sketch + serial bridge + test tool
-- [ ] Docs (`docs/ARDUINO_SETUP.md`)
+- [x] Integration Plan updated ([`docs/ARDUINO_INTEGRATION_PLAN.md`](docs/ARDUINO_INTEGRATION_PLAN.md))
+- [x] Step-by-Step Checklist created ([`docs/ARDUINO_INTEGRATION_CHECKLIST.md`](docs/ARDUINO_INTEGRATION_CHECKLIST.md))
+- [ ] PHP API configuration to connect `mbpsaas_api` to `motion_monitoring`
+- [ ] Android Models & UI Updates (`data/ApiModels.kt`, `DashboardScreen.kt`)
+- [ ] Arduino Firmware (`poultry_sensor.ino`) & Serial Reader Bridge execution
 
-## Where things are
+## File Structure
 - Android app: `app/src/main/java/.../` (data layer in `data/`, screens in `ui/`)
-- PHP API source: `api/` (junctioned into XAMPP as `mbpsaas_api` — see `docs/SETUP.md`)
+- PHP API source: `api/` (junctioned into XAMPP as `mbpsaas_api`)
+- Integration Checklist: `docs/ARDUINO_INTEGRATION_CHECKLIST.md`
+- Integration Plan: `docs/ARDUINO_INTEGRATION_PLAN.md`
 - Setup guide: `docs/SETUP.md`

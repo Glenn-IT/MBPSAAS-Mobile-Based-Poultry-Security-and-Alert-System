@@ -1,20 +1,19 @@
 <?php
-// One-time setup: creates the database, users table, and a test account.
-// Run in a browser: http://localhost/mbpsaas_api/setup.php
-// Safe to run again — it won't duplicate the test user.
-
+// MBPSAAS Database Setup for motion_monitoring database
 header('Content-Type: application/json; charset=utf-8');
 
 mysqli_report(MYSQLI_REPORT_OFF);
 $conn = new mysqli('localhost', 'root', '');
 if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'MySQL not running? ' . $conn->connect_error]);
+    echo json_encode(['success' => false, 'message' => 'MySQL connection error: ' . $conn->connect_error]);
     exit;
 }
 
-$conn->query("CREATE DATABASE IF NOT EXISTS mbpsaas_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-$conn->select_db('mbpsaas_db');
+// 1. Create motion_monitoring database if not exists
+$conn->query("CREATE DATABASE IF NOT EXISTS motion_monitoring CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
+$conn->select_db('motion_monitoring');
 
+// 2. Create users table
 $conn->query("
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -26,26 +25,38 @@ $conn->query("
         reset_token VARCHAR(64) DEFAULT NULL,
         reset_token_expires DATETIME DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
+// 3. Create motion_logs table
 $conn->query("
-    CREATE TABLE IF NOT EXISTS motion_events (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        zone VARCHAR(20) NOT NULL DEFAULT 'COOP1',
+    CREATE TABLE IF NOT EXISTS motion_logs (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        event_type VARCHAR(20) NOT NULL,
+        zone VARCHAR(20) NOT NULL DEFAULT 'ROOMC',
+        source VARCHAR(50) NOT NULL DEFAULT 'ARDUINO_PIR',
         detected_at DATETIME NOT NULL,
-        buzzer_triggered TINYINT(1) NOT NULL DEFAULT 1,
-        note VARCHAR(255) DEFAULT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_detected_at (detected_at),
+        KEY idx_event_type (event_type),
+        KEY idx_zone (zone)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Add 'zone' column to existing motion_events table if it doesn't exist
-$colCheck = $conn->query("SHOW COLUMNS FROM motion_events LIKE 'zone'");
-if ($colCheck && $colCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE motion_events ADD COLUMN zone VARCHAR(20) NOT NULL DEFAULT 'COOP1' AFTER id");
-}
+// 4. Create sms_logs table
+$conn->query("
+    CREATE TABLE IF NOT EXISTS sms_logs (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        zone VARCHAR(20) NOT NULL,
+        recipient VARCHAR(20) NOT NULL DEFAULT '',
+        status VARCHAR(20) NOT NULL,
+        detail VARCHAR(100) NOT NULL DEFAULT '',
+        sent_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
 
+// 5. Create sensor_zones table
 $conn->query("
     CREATE TABLE IF NOT EXISTS sensor_zones (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,14 +64,15 @@ $conn->query("
         name VARCHAR(100) NOT NULL,
         is_enabled TINYINT(1) NOT NULL DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Seed the 3 PIR sensor zones: COOP1, COOP2, PERIMETER
+// Seed initial sensor zones
 $initialSensors = [
-    ['COOP1', 'Coop 1 - PIR Sensor'],
-    ['COOP2', 'Coop 2 - PIR Sensor'],
-    ['PERIMETER', 'Perimeter - PIR Sensor'],
+    ['ROOMA', 'Coop Zone A'],
+    ['ROOMB', 'Coop Zone B'],
+    ['ROOMC', 'Coop Zone C'],
+    ['ROOMD', 'Perimeter Gate'],
 ];
 
 foreach ($initialSensors as $sensor) {
@@ -69,39 +81,37 @@ foreach ($initialSensors as $sensor) {
     $checkSensor = $conn->query("SELECT id FROM sensor_zones WHERE sensor_code = '$sCode'");
     if ($checkSensor && $checkSensor->num_rows === 0) {
         $stmt = $conn->prepare("INSERT INTO sensor_zones (sensor_code, name, is_enabled) VALUES (?, ?, 1)");
-        $stmt->bind_param('ss', $sCode, $sName);
-        $stmt->execute();
+        if ($stmt) {
+            $stmt->bind_param('ss', $sCode, $sName);
+            $stmt->execute();
+        }
     }
 }
 
-
-// Seed a test account: username "admin", password "admin123",
-// security answer "chicken" (answers are stored lowercase + hashed).
+// Seed default admin account (username: admin, password: admin123)
 $check = $conn->query("SELECT id FROM users WHERE username = 'admin'");
 if ($check && $check->num_rows === 0) {
     $stmt = $conn->prepare(
         "INSERT INTO users (username, email, password_hash, security_question, security_answer_hash)
          VALUES (?, ?, ?, ?, ?)"
     );
-    $username = 'admin';
-    $email = 'admin@mbpsaas.local';
-    $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
-    $question = 'What is your favorite animal?';
-    $answerHash = password_hash('chicken', PASSWORD_DEFAULT);
-    $stmt->bind_param('sssss', $username, $email, $passwordHash, $question, $answerHash);
-    $stmt->execute();
-    $seeded = true;
-} else {
-    $seeded = false;
+    if ($stmt) {
+        $username = 'admin';
+        $email = 'admin@mbpsaas.local';
+        $passwordHash = password_hash('admin123', PASSWORD_DEFAULT);
+        $question = 'What is your favorite animal?';
+        $answerHash = password_hash('chicken', PASSWORD_DEFAULT);
+        $stmt->bind_param('sssss', $username, $email, $passwordHash, $question, $answerHash);
+        $stmt->execute();
+    }
 }
 
 echo json_encode([
     'success' => true,
-    'message' => 'Database, users table, and motion_events table ready.',
-    'test_user_created' => $seeded,
+    'message' => 'Database motion_monitoring ready with users, motion_logs, sms_logs, and sensor_zones tables.',
     'test_credentials' => [
         'username' => 'admin',
         'password' => 'admin123',
-        'security_answer' => 'chicken',
-    ],
+        'security_answer' => 'chicken'
+    ]
 ]);
