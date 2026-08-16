@@ -211,7 +211,7 @@ fun TriggeredAlertsScreen(
             }
         }
 
-        // Zone Filter Chips
+        // Zone Filter Chips (3 Coop Zones)
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -220,8 +220,7 @@ fun TriggeredAlertsScreen(
                 null to "All Zones",
                 "ROOMA" to "Coop Zone A",
                 "ROOMB" to "Coop Zone B",
-                "ROOMC" to "Coop Zone C",
-                "ROOMD" to "Perimeter Gate"
+                "ROOMC" to "Coop Zone C"
             )
 
             items(zonesList) { (zoneCode, zoneLabel) ->

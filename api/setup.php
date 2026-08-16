@@ -67,12 +67,14 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Seed initial sensor zones
+// Remove ROOMD/PERIMETER if it exists
+$conn->query("DELETE FROM sensor_zones WHERE sensor_code IN ('ROOMD', 'PERIMETER')");
+
+// Seed 3 PIR sensor zones: ROOMA, ROOMB, ROOMC
 $initialSensors = [
     ['ROOMA', 'Coop Zone A'],
     ['ROOMB', 'Coop Zone B'],
     ['ROOMC', 'Coop Zone C'],
-    ['ROOMD', 'Perimeter Gate'],
 ];
 
 foreach ($initialSensors as $sensor) {
@@ -108,7 +110,7 @@ if ($check && $check->num_rows === 0) {
 
 echo json_encode([
     'success' => true,
-    'message' => 'Database motion_monitoring ready with users, motion_logs, sms_logs, and sensor_zones tables.',
+    'message' => 'Database motion_monitoring ready with 3 Coop Zones (ROOMA, ROOMB, ROOMC).',
     'test_credentials' => [
         'username' => 'admin',
         'password' => 'admin123',

@@ -49,7 +49,6 @@ internal fun getZoneDisplayName(zoneCode: String?): String {
         "ROOMA", "COOP1" -> "Coop Zone A"
         "ROOMB", "COOP2" -> "Coop Zone B"
         "ROOMC", "COOP3" -> "Coop Zone C"
-        "ROOMD", "GATE", "PERIMETER" -> "Perimeter Gate"
         else -> zoneCode ?: "General Area"
     }
 }
@@ -134,7 +133,7 @@ internal fun ZoneStatusGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            zones.entries.take(4).forEach { (code, zoneStatus) ->
+            zones.entries.take(3).forEach { (code, zoneStatus) ->
                 val isTriggered = zoneStatus.status == "MOTION_DETECTED" || zoneStatus.status == "MOTION"
                 val badgeColor = if (isTriggered) AlertColor else SafeColor
 

@@ -18,17 +18,16 @@ const SECURITY_QUESTIONS = [
     'What is your favorite food?',
 ];
 
-const ALLOWED_ZONES = ['ROOMA', 'ROOMB', 'ROOMC', 'ROOMD', 'COOP1', 'COOP2', 'COOP3', 'PERIMETER'];
+// 3 PIR Sensors / Coop Zones
+const ALLOWED_ZONES = ['ROOMA', 'ROOMB', 'ROOMC', 'COOP1', 'COOP2', 'COOP3'];
 
 const ZONE_LABELS = [
     'ROOMA' => 'Coop Zone A',
     'ROOMB' => 'Coop Zone B',
     'ROOMC' => 'Coop Zone C',
-    'ROOMD' => 'Perimeter Gate',
     'COOP1' => 'Coop Zone A',
     'COOP2' => 'Coop Zone B',
     'COOP3' => 'Coop Zone C',
-    'PERIMETER' => 'Perimeter Gate',
 ];
 
 function db_connect(): mysqli

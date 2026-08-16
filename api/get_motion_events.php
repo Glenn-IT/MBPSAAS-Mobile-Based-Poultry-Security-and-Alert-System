@@ -25,7 +25,6 @@ $zoneMap = [
     'ROOMA' => ['label' => 'Coop Zone A', 'status' => 'NO_MOTION', 'last_motion' => null],
     'ROOMB' => ['label' => 'Coop Zone B', 'status' => 'NO_MOTION', 'last_motion' => null],
     'ROOMC' => ['label' => 'Coop Zone C', 'status' => 'NO_MOTION', 'last_motion' => null],
-    'ROOMD' => ['label' => 'Perimeter Gate', 'status' => 'NO_MOTION', 'last_motion' => null],
 ];
 
 if ($result) {
@@ -55,12 +54,11 @@ if ($result) {
             }
         }
 
-        // Update zone status map for primary 4 zones
+        // Update zone status map for 3 coop zones
         $mappedZoneKey = match ($zoneCode) {
             'COOP1' => 'ROOMA',
             'COOP2' => 'ROOMB',
             'COOP3' => 'ROOMC',
-            'PERIMETER', 'GATE' => 'ROOMD',
             default => $zoneCode,
         };
 
