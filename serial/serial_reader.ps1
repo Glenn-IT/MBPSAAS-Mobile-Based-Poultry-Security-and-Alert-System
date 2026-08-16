@@ -1,10 +1,10 @@
 # ============================================================
-#  MBPSAAS - PowerShell Serial Bridge Listener
+#  MBPSAAS - PowerShell Serial Bridge Listener (Auto-Detect)
 #  File: serial/serial_reader.ps1
 # ============================================================
 
 param(
-    [string]$ComPort = "COM5",
+    [string]$ComPort = "AUTO",
     [int]$BaudRate = 9600
 )
 
@@ -18,17 +18,26 @@ function Say([string]$text) {
 
 function Line() { Write-Host ("-" * 58) }
 
-Line
-Write-Host "  MBPSAAS - Arduino Serial Reader (PowerShell Bridge)"
-Line
-Write-Host ("  COM Port : " + $ComPort)
-Write-Host ("  Baud Rate: " + $BaudRate)
-Write-Host ("  API URL  : " + $ApiUrl)
-Line
-Write-Host "  Press Ctrl + C to stop."
-Write-Host "  !! Make sure the Arduino IDE Serial Monitor is CLOSED !!"
-Line
-Write-Host ""
+function Resolve-AutoComPort([string]$requestedPort) {
+    if ($requestedPort -and $requestedPort -ne "AUTO" -and $requestedPort -ne "") {
+        return $requestedPort
+    }
+
+    # Auto-detect available COM ports on Windows
+    try {
+        $availablePorts = [System.IO.Ports.SerialPort]::GetPortNames()
+        if ($availablePorts -and $availablePorts.Count -gt 0) {
+            $detected = $availablePorts | Select-Object -First 1
+            Say ("AUTO-DETECTED Serial Port: " + $detected)
+            return $detected
+        }
+    }
+    catch {
+        # Fallback if GetPortNames fails
+    }
+
+    return "COM5" # Default fallback
+}
 
 $ZonePattern = '^(ROOMA|ROOMB|ROOMC|ROOMD|COOP1|COOP2|COOP3|PERIMETER)_(MOTION_DETECTED|MOTION_STOPPED)$'
 
@@ -36,23 +45,48 @@ $lastEvent = ""
 $lastTime  = Get-Date "2000-01-01"
 
 while ($true) {
-    Say ("Opening serial port " + $ComPort + " at " + $BaudRate + " baud...")
+    $targetPort = Resolve-AutoComPort $ComPort
 
-    $port = New-Object System.IO.Ports.SerialPort $ComPort, $BaudRate, None, 8, One
+    Line
+    Write-Host "  MBPSAAS - Arduino Serial Reader (Auto-Resolving Bridge)"
+    Line
+    Write-Host ("  COM Port : " + $targetPort + " (Requested: " + $ComPort + ")")
+    Write-Host ("  Baud Rate: " + $BaudRate)
+    Write-Host ("  API URL  : " + $ApiUrl)
+    Line
+    Write-Host "  Press Ctrl + C to stop."
+    Write-Host "  !! Make sure the Arduino IDE Serial Monitor is CLOSED !!"
+    Line
+    Write-Host ""
+
+    Say ("Opening serial port " + $targetPort + " at " + $BaudRate + " baud...")
+
+    $port = New-Object System.IO.Ports.SerialPort $targetPort, $BaudRate, None, 8, One
     $port.ReadTimeout = 1000
 
     try {
         $port.Open()
     }
     catch {
-        Say ("ERROR: Could not open " + $ComPort + ".")
+        Say ("ERROR: Could not open " + $targetPort + ".")
         Say ("Reason: " + $_.Exception.Message)
-        Say "Retrying in 3 seconds... (Make sure Arduino Serial Monitor is closed)"
+        
+        try {
+            $allPorts = [System.IO.Ports.SerialPort]::GetPortNames()
+            if ($allPorts -and $allPorts.Count -gt 0) {
+                Say ("Available COM ports on this system: " + ($allPorts -join ", "))
+            } else {
+                Say ("No active COM ports detected. Check USB connection to Arduino.")
+            }
+        }
+        catch {}
+
+        Say "Retrying in 3 seconds... (Ensure Arduino IDE Serial Monitor is closed)"
         Start-Sleep -Seconds 3
         continue
     }
 
-    Say ("CONNECTED to " + $ComPort + "! Listening for motion events...")
+    Say ("CONNECTED to " + $targetPort + "! Listening for motion events...")
     Line
 
     while ($port.IsOpen) {
