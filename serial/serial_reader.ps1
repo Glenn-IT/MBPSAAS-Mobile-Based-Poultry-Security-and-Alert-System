@@ -8,9 +8,11 @@ param(
     [int]$BaudRate = 9600
 )
 
-$ApiUrl = "http://localhost/mbpsaas_api/log_motion_event.php"
-$Source = "ARDUINO_PIR"
+$ApiUrl    = "http://localhost/mbpsaas_api/log_motion_event.php"
+$SmsApiUrl = "http://localhost/mbpsaas_api/record_sms.php"
+$Source    = "ARDUINO_PIR"
 $DuplicateWindow = 2
+$ReconnectDelay  = 3
 
 function Say([string]$text) {
     Write-Host ("[" + (Get-Date -Format "HH:mm:ss") + "] " + $text)
@@ -23,7 +25,6 @@ function Resolve-AutoComPort([string]$requestedPort) {
         return $requestedPort
     }
 
-    # Auto-detect available COM ports on Windows
     try {
         $availablePorts = [System.IO.Ports.SerialPort]::GetPortNames()
         if ($availablePorts -and $availablePorts.Count -gt 0) {
@@ -32,14 +33,13 @@ function Resolve-AutoComPort([string]$requestedPort) {
             return $detected
         }
     }
-    catch {
-        # Fallback if GetPortNames fails
-    }
+    catch {}
 
     return "COM5" # Default fallback
 }
 
 $ZonePattern = '^(ROOMA|ROOMB|ROOMC|ROOMD|COOP1|COOP2|COOP3|PERIMETER)_(MOTION_DETECTED|MOTION_STOPPED)$'
+$SmsPattern  = '^SMS_(SENT|FAIL|SKIP):(ROOMA|ROOMB|ROOMC|COOP1|COOP2|COOP3)(?::(.+))?$'
 
 $lastEvent = ""
 $lastTime  = Get-Date "2000-01-01"
@@ -50,9 +50,10 @@ while ($true) {
     Line
     Write-Host "  MBPSAAS - Arduino Serial Reader (Auto-Resolving Bridge)"
     Line
-    Write-Host ("  COM Port : " + $targetPort + " (Requested: " + $ComPort + ")")
-    Write-Host ("  Baud Rate: " + $BaudRate)
-    Write-Host ("  API URL  : " + $ApiUrl)
+    Write-Host ("  COM Port   : " + $targetPort + " (Requested: " + $ComPort + ")")
+    Write-Host ("  Baud Rate  : " + $BaudRate)
+    Write-Host ("  Motion API : " + $ApiUrl)
+    Write-Host ("  SMS API    : " + $SmsApiUrl)
     Line
     Write-Host "  Press Ctrl + C to stop."
     Write-Host "  !! Make sure the Arduino IDE Serial Monitor is CLOSED !!"
@@ -63,6 +64,7 @@ while ($true) {
 
     $port = New-Object System.IO.Ports.SerialPort $targetPort, $BaudRate, None, 8, One
     $port.ReadTimeout = 1000
+    $port.NewLine     = "`n"
 
     try {
         $port.Open()
@@ -81,19 +83,19 @@ while ($true) {
         }
         catch {}
 
-        Say "Retrying in 3 seconds... (Ensure Arduino IDE Serial Monitor is closed)"
-        Start-Sleep -Seconds 3
+        Say ("Retrying in " + $ReconnectDelay + " seconds... (Ensure Arduino IDE Serial Monitor is closed)")
+        Start-Sleep -Seconds $ReconnectDelay
         continue
     }
 
-    Say ("CONNECTED to " + $targetPort + "! Listening for motion events...")
+    Say ("CONNECTED to " + $targetPort + "! Listening for motion events and SMS logs...")
     Line
 
     while ($port.IsOpen) {
         try {
             $line = $port.ReadLine().Trim()
         }
-        catch [TimeoutException] {
+        catch [System.TimeoutException] {
             continue
         }
         catch {
@@ -105,6 +107,40 @@ while ($true) {
 
         Say ("SERIAL IN > " + $line)
 
+        # 1. Handle SMS Reports from Arduino
+        if ($line -match $SmsPattern) {
+            $smsResult = $Matches[1]
+            $smsZone   = $Matches[2]
+            $smsDetail = if ($Matches[3]) { $Matches[3] } else { "" }
+
+            switch ($smsResult) {
+                "SENT"  { $smsStatus = "SENT" }
+                "FAIL"  { $smsStatus = "FAILED" }
+                "SKIP"  { $smsStatus = "SKIPPED" }
+                default { $smsStatus = "FAILED" }
+            }
+
+            try {
+                $smsBody = @{
+                    zone   = $smsZone
+                    status = $smsStatus
+                    detail = $smsDetail
+                }
+                $smsResponse = Invoke-RestMethod -Uri $SmsApiUrl -Method Post -TimeoutSec 5 -Body $smsBody
+                if ($smsResponse.success) {
+                    Say ("   -> SMS API SUCCESS: Saved alert #" + $smsResponse.id + " [" + $smsStatus + "] for " + $smsZone)
+                } else {
+                    Say ("   -> SMS API MESSAGE: " + $smsResponse.message)
+                }
+            }
+            catch {
+                Say ("   -> SMS API HTTP ERROR: " + $_.Exception.Message)
+            }
+
+            continue
+        }
+
+        # 2. Handle Motion Events
         if ($line -match $ZonePattern) {
             $zone = $Matches[1].ToUpper()
             $eventType = $Matches[2].ToUpper()
@@ -142,6 +178,6 @@ while ($true) {
 
     if ($port.IsOpen) { $port.Close() }
     $port.Dispose()
-    Say "Reconnecting in 2 seconds..."
-    Start-Sleep -Seconds 2
+    Say ("Reconnecting in " + $ReconnectDelay + " seconds...")
+    Start-Sleep -Seconds $ReconnectDelay
 }

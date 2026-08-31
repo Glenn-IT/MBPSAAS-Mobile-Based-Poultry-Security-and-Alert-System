@@ -26,8 +26,8 @@ echo.
 
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo  SUCCESS: USB ADB Tunnel active! (8080 -^> 80)
-    echo  Your phone can now access http://localhost:8080/mbpsaas_api/
+    echo  SUCCESS: USB ADB Tunnel is ACTIVE [Port 8080 -^> 80]
+    echo  Your connected Android phone can now access http://localhost:8080/mbpsaas_api/
     echo.
 ) else (
     echo.
