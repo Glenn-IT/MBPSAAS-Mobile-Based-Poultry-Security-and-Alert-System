@@ -36,17 +36,22 @@ Whenever an update is made in `C:\xampp\htdocs\ABMDMS\`, the corresponding compo
 
 ## 3. Synchronization Rules & Checklist
 
-### ⚠️ Rule 1: Zone Names & Pin Assignments
-If any sensor pins or zone codes are modified in `ABMDMS/arduino/motion_sensor/motion_sensor.ino`:
-- **Current Pin Map:**
-  - `Pin 2`: `ROOMC` ("Coop Zone C" / Room C)
-  - `Pin 3`: `ROOMA` ("Coop Zone A" / Room A)
-  - `Pin 4`: `ROOMB` ("Coop Zone B" / Room B)
-  - `Pin 8`: Buzzer Alarm
-  - `Pins 10/11/12`: SIM800L GSM Module
+### ⚠️ Rule 1: Zone Names, Network IP & Pin Assignments
+- **Hardware Pin Map (ESP32 Dev Module):**
+  - `GPIO 13`: `ROOMC` ("Coop Zone C" / Room C PIR)
+  - `GPIO 12`: `ROOMA` ("Coop Zone A" / Room A PIR)
+  - `GPIO 14`: `ROOMB` ("Coop Zone B" / Room B PIR)
+  - `GPIO 16 / 17 / 4`: SIM800L GSM Module (RX2 / TX2 / RST)
+  - `GPIO 25 / 26 / 27`: MAX98357A I2S Audio Amplifier (LRC/WS, BCLK, DIN)
+- **Legacy Pin Map (Arduino Uno):**
+  - `Pin 2`: `ROOMC`, `Pin 3`: `ROOMA`, `Pin 4`: `ROOMB`, `Pin 8`: Buzzer, `Pins 10/11/12`: SIM800L
+- **Mobile Network Connection (`ApiClient.kt`):**
+  - **Wi-Fi Mode**: Set `BASE_URL = "http://<LAPTOP_IP>/mbpsaas_api/"` (e.g. `10.192.10.14`). Phone and Laptop must be on the same Wi-Fi.
+  - **USB Cable Mode**: Set `BASE_URL = "http://localhost:8080/mbpsaas_api/"` and run `adb reverse tcp:8080 tcp:80`.
+  - 📖 **Full Guide**: See [docs/WIFI_AND_IP_CONFIGURATION_GUIDE.md](file:///C:/Users/GLENN/AndroidStudioProjects/MBPSAASMobileBasedPoultrySecurityandAlertSystem/docs/WIFI_AND_IP_CONFIGURATION_GUIDE.md) for switching Wi-Fi networks.
 - **Must update in Android Studio:**
-  1. `arduino/poultry_sensor/poultry_sensor.ino` (Pin array & zone tokens).
-  2. `serial/serial_reader.ps1` (`$ZonePattern` regex: must include all active zones).
+  1. `app/src/main/java/.../data/ApiClient.kt` (`BASE_URL` with current Laptop Wi-Fi IP).
+  2. `arduino/poultry_sensor/poultry_sensor.ino` / ESP32 sketch.
   3. `api/config.php` (`ALLOWED_ZONES` and `ZONE_LABELS`).
   4. `app/src/main/java/.../data/ApiModels.kt` (`ZoneMap` or zone models).
   5. `app/src/main/java/.../ui/DashboardScreen.kt` & `HomeScreen.kt` (UI zone cards).

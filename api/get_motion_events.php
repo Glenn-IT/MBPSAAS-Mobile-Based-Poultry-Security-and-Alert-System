@@ -27,6 +27,20 @@ $zoneMap = [
     'ROOMC' => ['label' => 'Coop Zone C', 'status' => 'NO_MOTION', 'last_motion' => null],
 ];
 
+// Check which sensor zones are disabled by the user
+$disabledZones = [];
+$sensorZonesCheck = $conn->query("SHOW TABLES LIKE 'sensor_zones'");
+if ($sensorZonesCheck && $sensorZonesCheck->num_rows > 0) {
+    $szResult = $conn->query("SELECT sensor_code, is_enabled FROM sensor_zones");
+    if ($szResult) {
+        while ($szRow = $szResult->fetch_assoc()) {
+            if (!(bool)$szRow['is_enabled']) {
+                $disabledZones[strtoupper($szRow['sensor_code'])] = true;
+            }
+        }
+    }
+}
+
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $eventType = strtoupper($row['event_type'] ?? 'MOTION_DETECTED');
@@ -49,7 +63,8 @@ if ($result) {
 
         if ($latestEvent === null) {
             $latestEvent = $eventItem;
-            if ($isMotion) {
+            // Only trigger overall active motion status if this zone is currently enabled
+            if ($isMotion && !isset($disabledZones[$zoneCode])) {
                 $overallStatus = 'MOTION_DETECTED';
             }
         }
@@ -63,9 +78,20 @@ if ($result) {
         };
 
         if (array_key_exists($mappedZoneKey, $zoneMap) && $zoneMap[$mappedZoneKey]['last_motion'] === null) {
-            $zoneMap[$mappedZoneKey]['status'] = $eventType;
+            if (isset($disabledZones[$mappedZoneKey])) {
+                $zoneMap[$mappedZoneKey]['status'] = 'DISABLED';
+            } else {
+                $zoneMap[$mappedZoneKey]['status'] = $eventType;
+            }
             $zoneMap[$mappedZoneKey]['last_motion'] = $row['detected_at'];
         }
+    }
+}
+
+// Mark any remaining disabled zones in the zoneMap
+foreach ($zoneMap as $zk => $zv) {
+    if (isset($disabledZones[$zk])) {
+        $zoneMap[$zk]['status'] = 'DISABLED';
     }
 }
 
