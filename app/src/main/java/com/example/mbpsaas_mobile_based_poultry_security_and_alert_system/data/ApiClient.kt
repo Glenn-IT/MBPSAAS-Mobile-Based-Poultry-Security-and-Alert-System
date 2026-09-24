@@ -10,7 +10,7 @@ object ApiClient {
     // - Wi-Fi Mode (Phone & Laptop on same Wi-Fi): "http://<LAPTOP_IP>/mbpsaas_api/" (e.g. 10.192.10.14)
     // - USB Cable Mode (via `adb reverse tcp:8080 tcp:80`): "http://localhost:8080/mbpsaas_api/"
     // =====================================================================================
-    private const val BASE_URL = "http://10.192.10.14/mbpsaas_api/"
+    private const val BASE_URL = "http://10.45.170.14/mbpsaas_api/"
 
     val service: ApiService by lazy {
         Retrofit.Builder()
